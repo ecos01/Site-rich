@@ -1,13 +1,22 @@
 import {defineConfig} from 'vite';
+import {fileURLToPath} from 'node:url';
 import {hydrogen} from '@shopify/hydrogen/vite';
 import {oxygen} from '@shopify/mini-oxygen/vite';
 import {reactRouter} from '@react-router/dev/vite';
 import tailwindcss from '@tailwindcss/vite';
 
+const shim = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+
 export default defineConfig({
   plugins: [tailwindcss(), hydrogen(), oxygen(), reactRouter()],
   resolve: {
     tsconfigPaths: true,
+    // Redirect Next.js imports in ported components to local shims.
+    alias: {
+      'next/link': shim('./app/shims/next-link.tsx'),
+      'next/image': shim('./app/shims/next-image.tsx'),
+      'next/navigation': shim('./app/shims/next-navigation.ts'),
+    },
   },
   build: {
     // Allow a strict Content-Security-Policy

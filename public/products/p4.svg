@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs>
+    <radialGradient id="g4" cx="35%" cy="30%" r="90%">
+      <stop offset="0%" stop-color="#FFE1BA"/>
+      <stop offset="100%" stop-color="#DAFFE0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="800" fill="#DAFFE0"/>
+  <circle cx="340" cy="480" r="260" fill="url(#g4)" opacity="0.75"/>
+  <rect x="60" y="360" width="480" height="160" fill="#171717" opacity="0.92"/>
+  <text x="80" y="420" font-family="Arial Black, sans-serif" font-size="52" fill="#FFFFFF" letter-spacing="-2">LAB 04</text>
+</svg>

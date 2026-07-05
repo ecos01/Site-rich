@@ -1,177 +1,101 @@
-import {Await, useLoaderData, Link} from 'react-router';
+import Link from 'next/link';
+import {useLoaderData} from 'react-router';
 import type {Route} from './+types/_index';
-import {Suspense} from 'react';
-import {Image} from '@shopify/hydrogen';
-import type {
-  FeaturedCollectionFragment,
-  RecommendedProductsQuery,
-} from 'storefrontapi.generated';
-import {ProductItem} from '~/components/ProductItem';
-import {MockShopNotice} from '~/components/MockShopNotice';
+import {ArrowRight, ArrowUpRight} from 'lucide-react';
+import {HeroSection} from '@/components/hero';
+import {Reveal} from '@/components/reveal';
+import {CategoryDivider} from '@/components/site';
+import {StoreCard} from '@/components/StoreCard';
+import {ProductCarousel} from '@/components/product-carousel';
+import type {StoreProduct} from '@/components/QuickShop';
+import {getShopProducts} from '@/lib/shop';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: 'Hydrogen | Home'}];
-};
+export const meta = () => [{title: 'LAB19 — Wear the Noise'}];
 
-export async function loader(args: Route.LoaderArgs) {
-  // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
-
-  // Await the critical data required to render initial state of the page
-  const criticalData = await loadCriticalData(args);
-
-  return {...deferredData, ...criticalData};
-}
-
-/**
- * Load data necessary for rendering content above the fold. This is the critical data
- * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- */
-async function loadCriticalData({context}: Route.LoaderArgs) {
-  const [{collections}] = await Promise.all([
-    context.storefront.query(FEATURED_COLLECTION_QUERY),
-    // Add other queries here, so that they are loaded in parallel
+export async function loader({context}: Route.LoaderArgs) {
+  const [recent, featured] = await Promise.all([
+    getShopProducts(context.storefront, {first: 12, sort: 'created-desc'}),
+    getShopProducts(context.storefront, {first: 10, sort: 'best-selling'}),
   ]);
-
-  return {
-    isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
-    featuredCollection: collections.nodes[0],
-  };
+  return {recent, featured};
 }
 
-/**
- * Load data for rendering content below the fold. This data is deferred and will be
- * fetched after the initial page load. If it's unavailable, the page should still 200.
- * Make sure to not throw any errors here, as it will cause the page to 500.
- */
-function loadDeferredData({context}: Route.LoaderArgs) {
-  const recommendedProducts = context.storefront
-    .query(RECOMMENDED_PRODUCTS_QUERY)
-    .catch((error: Error) => {
-      // Log query errors, but don't throw them so the page can still render
-      console.error(error);
-      return null;
-    });
-
-  return {
-    recommendedProducts,
-  };
-}
-
-export default function Homepage() {
-  const data = useLoaderData<typeof loader>();
+export default function Home() {
+  const {recent, featured} = useLoaderData<typeof loader>();
   return (
-    <div className="home">
-      {data.isShopLinked ? null : <MockShopNotice />}
-      <FeaturedCollection collection={data.featuredCollection} />
-      <RecommendedProducts products={data.recommendedProducts} />
-    </div>
+    <>
+      <HeroSection />
+      <CategoryDivider title="New Drop" align="left" />
+      <ProductCarousel products={recent as StoreProduct[]} />
+      <FeaturedSection products={featured as StoreProduct[]} />
+      <CampaignTeaser />
+    </>
   );
 }
 
-function FeaturedCollection({
-  collection,
-}: {
-  collection: FeaturedCollectionFragment;
-}) {
-  if (!collection) return null;
-  const image = collection?.image;
+function FeaturedSection({products}: {products: StoreProduct[]}) {
   return (
-    <Link
-      className="featured-collection"
-      to={`/collections/${collection.handle}`}
-    >
-      {image && (
-        <div className="featured-collection-image">
-          <Image
-            data={image}
-            sizes="100vw"
-            alt={image.altText || collection.title}
-          />
+    <section className="mx-auto mt-16 w-full max-w-[1400px] px-6 md:px-8">
+      <Reveal>
+        <div className="mb-10 flex items-end justify-between">
+          <div>
+            <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#008F95]">
+              In evidenza
+            </span>
+            <h3 className="font-display mt-2 uppercase text-[clamp(1.75rem,3.5vw,3rem)]">
+              Featured pieces
+            </h3>
+          </div>
+          <Link
+            href="/shop"
+            className="group hidden items-center gap-2 text-sm font-medium uppercase tracking-[0.1em] text-[#008F95] md:inline-flex"
+          >
+            View all
+            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
         </div>
-      )}
-      <h1>{collection.title}</h1>
-    </Link>
-  );
-}
-
-function RecommendedProducts({
-  products,
-}: {
-  products: Promise<RecommendedProductsQuery | null>;
-}) {
-  return (
-    <section
-      className="recommended-products"
-      aria-labelledby="recommended-products"
-    >
-      <h2 id="recommended-products">Recommended Products</h2>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Await resolve={products}>
-          {(response) => (
-            <div className="recommended-products-grid">
-              {response
-                ? response.products.nodes.map((product) => (
-                    <ProductItem key={product.id} product={product} />
-                  ))
-                : null}
-            </div>
-          )}
-        </Await>
-      </Suspense>
-      <br />
+      </Reveal>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4 lg:grid-cols-5">
+        {products.map((p, i) => (
+          <Reveal key={p.id} delay={(i % 5) * 0.08}>
+            <StoreCard product={p} />
+          </Reveal>
+        ))}
+      </div>
+      <Reveal className="mt-12 flex justify-center">
+        <Link href="/collections/abbigliamento" className="btn-brutal">
+          <span>Tutto lo shop</span>
+        </Link>
+      </Reveal>
     </section>
   );
 }
 
-const FEATURED_COLLECTION_QUERY = `#graphql
-  fragment FeaturedCollection on Collection {
-    id
-    title
-    image {
-      id
-      url
-      altText
-      width
-      height
-    }
-    handle
-  }
-  query FeaturedCollection($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {
-      nodes {
-        ...FeaturedCollection
-      }
-    }
-  }
-` as const;
-
-const RECOMMENDED_PRODUCTS_QUERY = `#graphql
-  fragment RecommendedProduct on Product {
-    id
-    title
-    handle
-    priceRange {
-      minVariantPrice {
-        amount
-        currencyCode
-      }
-    }
-    featuredImage {
-      id
-      url
-      altText
-      width
-      height
-    }
-  }
-  query RecommendedProducts ($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    products(first: 4, sortKey: UPDATED_AT, reverse: true) {
-      nodes {
-        ...RecommendedProduct
-      }
-    }
-  }
-` as const;
+function CampaignTeaser() {
+  return (
+    <section className="mt-16 bg-[#FFE1BA] px-6 py-12 md:px-8 md:py-14">
+      <div className="mx-auto grid w-full max-w-[948px] grid-cols-1 gap-12 md:grid-cols-12 md:items-end">
+        <div className="md:col-span-8">
+          <Reveal>
+            <h2 className="font-display uppercase text-[clamp(2rem,4vw,3.75rem)] leading-[0.9] tracking-tight">
+              Garments set like headlines, worn like manifestos.
+            </h2>
+          </Reveal>
+        </div>
+        <div className="md:col-span-4">
+          <Reveal delay={0.1}>
+            <Link
+              href="/campaign"
+              className="group flex items-center justify-between border-t border-[#171717]/20 py-6"
+            >
+              <span className="text-[15px] font-medium">Explore the campaign</span>
+              <span className="flex size-9 items-center justify-center rounded-full border border-[#171717]/40 transition-colors duration-300 group-hover:border-[#008F95] group-hover:text-[#008F95]">
+                <ArrowUpRight className="size-4" />
+              </span>
+            </Link>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}

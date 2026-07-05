@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs>
+    <radialGradient id="g7" cx="35%" cy="30%" r="90%">
+      <stop offset="0%" stop-color="#008F95"/>
+      <stop offset="100%" stop-color="#FFDDE8"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="800" fill="#FFDDE8"/>
+  <circle cx="520" cy="690" r="260" fill="url(#g7)" opacity="0.75"/>
+  <rect x="60" y="240" width="480" height="220" fill="#171717" opacity="0.92"/>
+  <text x="80" y="300" font-family="Arial Black, sans-serif" font-size="52" fill="#FFFFFF" letter-spacing="-2">LAB 07</text>
+</svg>

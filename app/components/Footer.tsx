@@ -1,129 +1,101 @@
-import {Suspense} from 'react';
-import {Await, NavLink} from 'react-router';
-import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
+import Image from "next/image";
+import Link from "next/link";
+import { InstagramIcon } from "@/components/instagram-icon";
+import { XIcon } from "@/components/x-icon";
+import { Button } from "@/components/ui/button";
+import { FullWidthDivider } from "@/components/full-width-divider";
 
-interface FooterProps {
-  footer: Promise<FooterQuery | null>;
-  header: HeaderQuery;
-  publicStoreDomain: string;
+export function Footer() {
+	return (
+		<footer className="relative w-full bg-[#171717] text-white">
+			<div className="mx-auto w-full max-w-[948px] px-6 md:px-8">
+			<FullWidthDivider position="top" className="bg-white/10" />
+			<div className="grid grid-cols-6 gap-6 py-4">
+				<div className="col-span-6 flex flex-col gap-4 pt-5 md:col-span-4">
+					<Link className="w-max" href="/" aria-label="LAB19 — home">
+						<Image
+							src="/logo.png"
+							alt="LAB19 — Sneakers & Lifestyles"
+							width={343}
+							height={95}
+							className="h-6 w-auto"
+						/>
+					</Link>
+					<p className="max-w-sm text-balance text-white/60 text-sm">
+						Sneakers & lifestyles. Loud silhouettes, warm palette.
+					</p>
+					<div className="flex gap-2">
+						{socialLinks.map((item, index) => (
+							<Button
+								asChild
+								key={`social-${item.link}-${index}`}
+								size="icon"
+								variant="outline"
+								className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+							>
+								<a href={item.link} target="_blank" rel="noopener noreferrer">
+									{item.icon}
+								</a>
+							</Button>
+						))}
+					</div>
+				</div>
+				<div className="col-span-3 w-full md:col-span-1">
+					<span className="text-white/50 text-xs">Shop</span>
+					<div className="mt-2 flex flex-col gap-2">
+						{shop.map(({ href, title }) => (
+							<Link
+								className="w-max text-sm text-white/80 hover:text-[#FFE1BA] hover:underline"
+								href={href}
+								key={title}
+							>
+								{title}
+							</Link>
+						))}
+					</div>
+				</div>
+				<div className="col-span-3 w-full md:col-span-1">
+					<span className="text-white/50 text-xs">House</span>
+					<div className="mt-2 flex flex-col gap-2">
+						{house.map(({ href, title }) => (
+							<Link
+								className="w-max text-sm text-white/80 hover:text-[#FFE1BA] hover:underline"
+								href={href}
+								key={title}
+							>
+								{title}
+							</Link>
+						))}
+					</div>
+				</div>
+			</div>
+			<FullWidthDivider className="bg-white/10" />
+			<div className="flex items-center justify-center gap-2 py-4">
+				<p className="text-center font-light text-white/50 text-sm">
+					&copy; 2026 Ecos Studio. All rights reserved.
+				</p>
+			</div>
+			</div>
+		</footer>
+	);
 }
 
-export function Footer({
-  footer: footerPromise,
-  header,
-  publicStoreDomain,
-}: FooterProps) {
-  return (
-    <Suspense>
-      <Await resolve={footerPromise}>
-        {(footer) => (
-          <footer className="footer">
-            {footer?.menu && header.shop.primaryDomain?.url && (
-              <FooterMenu
-                menu={footer.menu}
-                primaryDomainUrl={header.shop.primaryDomain.url}
-                publicStoreDomain={publicStoreDomain}
-              />
-            )}
-          </footer>
-        )}
-      </Await>
-    </Suspense>
-  );
-}
+const shop = [
+	{ title: "New arrivals", href: "/shop" },
+	{ title: "Essentials", href: "/essential" },
+	{ title: "Supreme", href: "/supreme" },
+	{ title: "Altro", href: "/altro" },
+	{ title: "Brands", href: "/brands" },
+];
 
-function FooterMenu({
-  menu,
-  primaryDomainUrl,
-  publicStoreDomain,
-}: {
-  menu: FooterQuery['menu'];
-  primaryDomainUrl: FooterProps['header']['shop']['primaryDomain']['url'];
-  publicStoreDomain: string;
-}) {
-  return (
-    <nav className="footer-menu" role="navigation">
-      {(menu || FALLBACK_FOOTER_MENU).items.map((item) => {
-        if (!item.url) return null;
-        // if the url is internal, we strip the domain
-        const url =
-          item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
-            ? new URL(item.url).pathname
-            : item.url;
-        const isExternal = !url.startsWith('/');
-        return isExternal ? (
-          <a href={url} key={item.id} rel="noopener noreferrer" target="_blank">
-            {item.title}
-          </a>
-        ) : (
-          <NavLink
-            end
-            key={item.id}
-            prefetch="intent"
-            style={activeLinkStyle}
-            to={url}
-          >
-            {item.title}
-          </NavLink>
-        );
-      })}
-    </nav>
-  );
-}
+const house = [
+	{ title: "About", href: "/about" },
+	{ title: "Campaign", href: "/campaign" },
+	{ title: "Stockists", href: "/about" },
+	{ title: "Contact", href: "/about" },
+];
 
-const FALLBACK_FOOTER_MENU = {
-  id: 'gid://shopify/Menu/199655620664',
-  items: [
-    {
-      id: 'gid://shopify/MenuItem/461633060920',
-      resourceId: 'gid://shopify/ShopPolicy/23358046264',
-      tags: [],
-      title: 'Privacy Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/privacy-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633093688',
-      resourceId: 'gid://shopify/ShopPolicy/23358013496',
-      tags: [],
-      title: 'Refund Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/refund-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633126456',
-      resourceId: 'gid://shopify/ShopPolicy/23358111800',
-      tags: [],
-      title: 'Shipping Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/shipping-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633159224',
-      resourceId: 'gid://shopify/ShopPolicy/23358079032',
-      tags: [],
-      title: 'Terms of Service',
-      type: 'SHOP_POLICY',
-      url: '/policies/terms-of-service',
-      items: [],
-    },
-  ],
-};
-
-function activeLinkStyle({
-  isActive,
-  isPending,
-}: {
-  isActive: boolean;
-  isPending: boolean;
-}) {
-  return {
-    fontWeight: isActive ? 'bold' : undefined,
-    color: isPending ? 'grey' : 'white',
-  };
-}
+const socialLinks = [
+	{ icon: <InstagramIcon />, link: "https://instagram.com" },
+	{ icon: <XIcon />, link: "https://twitter.com" },
+];
