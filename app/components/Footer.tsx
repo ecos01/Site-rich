@@ -90,9 +90,10 @@ const shop = [
 
 const house = [
 	{ title: "About", href: "/about" },
-	{ title: "Campaign", href: "/campaign" },
+	{ title: "Nineteen", href: "/nineteen" },
 	{ title: "Stockists", href: "/about" },
 	{ title: "Contact", href: "/about" },
+	{ title: "Programma Loyalty", href: "/user/loyalty" },
 ];
 
 const socialLinks = [

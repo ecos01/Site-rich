@@ -22,7 +22,7 @@ export function PageLayout({cart, children = null}: PageLayoutProps) {
       <QuickShopProvider>
         <CartAside cart={cart} />
         <QuickShopAside />
-        <Nav />
+        <Nav cart={cart} />
         <main className="flex-1">{children}</main>
         <Footer />
       </QuickShopProvider>

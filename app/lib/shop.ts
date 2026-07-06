@@ -1,6 +1,8 @@
 import type {Storefront} from '@shopify/hydrogen';
 import type {StoreProduct} from '@/components/QuickShop';
 import {BRANDS, brandSlug} from '@/lib/brands';
+import {LAB19_CATALOG} from '@/lib/fixtures/catalog';
+import {USE_LOCAL_CATALOG} from '@/lib/testing';
 
 // Storefront product data for the shop grid + quick-shop size drawer.
 // Works against mock.shop now and the real store later (same Storefront API).
@@ -79,6 +81,48 @@ export function buildQuery(opts: {
   return parts.length ? parts.join(' ') : undefined;
 }
 
+// The query string buildQuery() produces uses a small, fixed set of clauses —
+// safe to parse back out for filtering the local fixture catalog.
+function filterFixture(products: StoreProduct[], query?: string): StoreProduct[] {
+  if (!query) return products;
+  let result = products;
+  const vendor = query.match(/vendor:'([^']+)'/)?.[1];
+  if (vendor) result = result.filter((p) => p.vendor === vendor);
+  const productType = query.match(/product_type:'([^']+)'/)?.[1];
+  if (productType) result = result.filter((p) => p.productType === productType);
+  if (query.includes('available_for_sale:true'))
+    result = result.filter((p) => p.availableForSale);
+  const minPrice = query.match(/variants\.price:>=([\d.]+)/)?.[1];
+  if (minPrice)
+    result = result.filter(
+      (p) => Number(p.priceRange.minVariantPrice.amount) >= Number(minPrice),
+    );
+  const maxPrice = query.match(/variants\.price:<=([\d.]+)/)?.[1];
+  if (maxPrice)
+    result = result.filter(
+      (p) => Number(p.priceRange.minVariantPrice.amount) <= Number(maxPrice),
+    );
+  return result;
+}
+
+function sortFixture(
+  products: StoreProduct[],
+  sortKey: string,
+  reverse: boolean,
+): StoreProduct[] {
+  let sorted = products;
+  if (sortKey === 'TITLE')
+    sorted = [...products].sort((a, b) => a.title.localeCompare(b.title));
+  else if (sortKey === 'PRICE')
+    sorted = [...products].sort(
+      (a, b) =>
+        Number(a.priceRange.minVariantPrice.amount) -
+        Number(b.priceRange.minVariantPrice.amount),
+    );
+  else sorted = [...products];
+  return reverse ? sorted.reverse() : sorted;
+}
+
 export async function getShopProducts(
   storefront: Storefront,
   opts: {
@@ -92,6 +136,12 @@ export async function getShopProducts(
   // RELEVANCE requires a search term; fall back to BEST_SELLING without one.
   const sortKey =
     sort.sortKey === 'RELEVANCE' && !opts.query ? 'BEST_SELLING' : sort.sortKey;
+
+  if (USE_LOCAL_CATALOG) {
+    const filtered = filterFixture(LAB19_CATALOG, opts.query);
+    return sortFixture(filtered, sortKey, sort.reverse).slice(0, opts.first ?? 24);
+  }
+
   const {products} = await storefront.query(STORE_PRODUCTS_QUERY, {
     variables: {
       first: opts.first ?? 24,
@@ -134,9 +184,10 @@ const hasGenre = (p: StoreProduct, genre: string) =>
   (p.tags ?? []).some((t) => t.toLowerCase() === genre.toLowerCase());
 
 // Footwear detector — by product type or tag. Lets /collections/calzature show
-// only shoes and /collections/abbigliamento exclude them.
-const SHOE_RE = /shoe|sneaker|calzatur|footwear|boot|stivali|sandal|ciabatt|scarp/i;
-const isShoe = (p: StoreProduct) =>
+// only shoes and /collections/abbigliamento exclude them. Also used on PDP/quick-shop
+// to decide when to show EU size labels + the size chart.
+export const SHOE_RE = /shoe|sneaker|calzatur|footwear|boot|stivali|sandal|ciabatt|scarp/i;
+export const isShoe = (p: {productType?: string | null; tags?: string[] | null}) =>
   SHOE_RE.test(p.productType ?? '') || (p.tags ?? []).some((t) => SHOE_RE.test(t));
 
 export async function loadShopCollection(

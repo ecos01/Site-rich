@@ -14,7 +14,7 @@ export const meta = () => [{title: 'LAB19 — Wear the Noise'}];
 
 export async function loader({context}: Route.LoaderArgs) {
   const [recent, featured] = await Promise.all([
-    getShopProducts(context.storefront, {first: 12, sort: 'created-desc'}),
+    getShopProducts(context.storefront, {first: 5, sort: 'created-desc'}),
     getShopProducts(context.storefront, {first: 10, sort: 'best-selling'}),
   ]);
   return {recent, featured};
@@ -85,10 +85,10 @@ function CampaignTeaser() {
         <div className="md:col-span-4">
           <Reveal delay={0.1}>
             <Link
-              href="/campaign"
+              href="/nineteen"
               className="group flex items-center justify-between border-t border-[#171717]/20 py-6"
             >
-              <span className="text-[15px] font-medium">Explore the campaign</span>
+              <span className="text-[15px] font-medium">Shop Nineteen</span>
               <span className="flex size-9 items-center justify-center rounded-full border border-[#171717]/40 transition-colors duration-300 group-hover:border-[#008F95] group-hover:text-[#008F95]">
                 <ArrowUpRight className="size-4" />
               </span>

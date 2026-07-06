@@ -3,8 +3,9 @@ import type {CartLayout, LineItemChildrenMap} from '~/components/CartMain';
 import {CartForm, Image, type OptimisticCartLine} from '@shopify/hydrogen';
 import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
-import {ProductPrice} from './ProductPrice';
 import {useAside} from './Aside';
+import {money} from './QuickShop';
+import {UNIT_PRICE_ATTR} from './ShippingModal';
 import type {
   CartApiQueryFragment,
   CartLineFragment,
@@ -34,6 +35,17 @@ export function CartLineItem({
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
 
+  // Show the price the user picked in the size/shipping box (stored per-unit as
+  // an attribute), always in EUR. Falls back to the variant line total.
+  const unitAttr = line.attributes?.find((a) => a.key === UNIT_PRICE_ATTR);
+  const displayAmount = unitAttr
+    ? Number(unitAttr.value) * (line.quantity ?? 1)
+    : Number(line.cost?.totalAmount?.amount ?? 0);
+  // Attributes shown to the user — hide internal "_"-prefixed ones.
+  const visibleAttributes = line.attributes?.filter(
+    (a) => a.value && !a.key.startsWith('_'),
+  );
+
   return (
     <li key={id} className="cart-line">
       <div className="cart-line-inner">
@@ -62,12 +74,21 @@ export function CartLineItem({
               <strong>{product.title}</strong>
             </p>
           </Link>
-          <ProductPrice price={line?.cost?.totalAmount} />
+          <div aria-label="Price" className="product-price" role="group">
+            {money({amount: String(displayAmount), currencyCode: 'EUR'})}
+          </div>
           <ul>
             {selectedOptions.map((option) => (
               <li key={option.name}>
                 <small>
                   {option.name}: {option.value}
+                </small>
+              </li>
+            ))}
+            {visibleAttributes?.map((attr) => (
+              <li key={attr.key}>
+                <small>
+                  {attr.key}: {attr.value}
                 </small>
               </li>
             ))}

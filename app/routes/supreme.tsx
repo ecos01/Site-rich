@@ -1,18 +1,15 @@
-import {CategoryDivider} from '@/components/site';
-import {ShopGrid} from '@/components/shop-grid';
-import {MegaNav} from '@/components/mega-nav';
-import {ShopBanner} from '@/components/shop-banner';
-import {FEATURED} from '@/lib/products';
+import {useLoaderData} from 'react-router';
+import type {Route} from './+types/supreme';
+import {ShopPage} from '@/components/ShopPage';
+import {loadShopCollection} from '@/lib/shop';
 
-export const meta = () => [{title: 'Supreme — RICK'}];
+export const meta = () => [{title: 'Supreme — LAB19'}];
+
+export async function loader({context, request}: Route.LoaderArgs) {
+  return loadShopCollection(context.storefront, request, 'all');
+}
 
 export default function SupremePage() {
-  return (
-    <>
-      <ShopBanner />
-      <MegaNav />
-      <CategoryDivider title="Supreme" align="left" />
-      <ShopGrid products={FEATURED} />
-    </>
-  );
+  const {products, sizes} = useLoaderData<typeof loader>();
+  return <ShopPage title="Supreme" products={products} sizes={sizes} />;
 }

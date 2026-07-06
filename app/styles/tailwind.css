@@ -8,6 +8,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'Geist';
+  src: url('../assets/fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -156,11 +164,11 @@
   --input: rgb(23 23 23 / 0.15);
   --ring: #008f95;
   --radius: 0rem;
-  --font-sans: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-display {
-  font-family: 'Clash Display', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.05em;
   line-height: 0.75;
@@ -241,10 +249,10 @@
   background: #171717;
   color: #ffffff;
   border-radius: 0;
-  padding: 1rem 2.5rem;
-  font-family: 'Satoshi', sans-serif;
+  padding: 1.35rem 3.25rem;
+  font-family: 'Geist', sans-serif;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;

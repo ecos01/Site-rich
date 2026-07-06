@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import nineteenLogo from "~/assets/nineteen-logo-transparent.png";
 
 export function HeroSection() {
   return (
@@ -59,11 +60,12 @@ export function HeroSection() {
             <span>Shop the drop</span>
           </Link>
           <Link
-            href="/campaign"
-            className="group inline-flex items-center gap-2 text-sm font-medium uppercase tracking-[0.1em] text-[#008F95]"
+            href="/nineteen"
+            aria-label="Shop Nineteen"
+            className="group inline-flex items-center gap-3 text-base font-medium uppercase tracking-[0.1em] text-[#008F95]"
           >
-            View campaign
-            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+            <img src={nineteenLogo} alt="" className="h-7 w-auto" />
+            <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
       </div>

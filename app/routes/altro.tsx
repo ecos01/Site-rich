@@ -1,23 +1,15 @@
-import {CategoryDivider} from '@/components/site';
-import {ShopGrid} from '@/components/shop-grid';
-import {MegaNav} from '@/components/mega-nav';
-import {ShopBanner} from '@/components/shop-banner';
-import {PRODUCTS} from '@/lib/products';
+import {useLoaderData} from 'react-router';
+import type {Route} from './+types/altro';
+import {ShopPage} from '@/components/ShopPage';
+import {loadShopCollection} from '@/lib/shop';
 
-export const meta = () => [{title: 'Altro — RICK'}];
+export const meta = () => [{title: 'Altro — LAB19'}];
 
-// Altro = the rest (outerwear + shoes).
-const ITEMS = PRODUCTS.filter(
-  (p) => p.category === 'Outerwear' || p.category === 'Shoes',
-);
+export async function loader({context, request}: Route.LoaderArgs) {
+  return loadShopCollection(context.storefront, request, 'all');
+}
 
 export default function AltroPage() {
-  return (
-    <>
-      <ShopBanner />
-      <MegaNav />
-      <CategoryDivider title="Altro" align="left" />
-      <ShopGrid products={ITEMS} />
-    </>
-  );
+  const {products, sizes} = useLoaderData<typeof loader>();
+  return <ShopPage title="Altro" products={products} sizes={sizes} />;
 }

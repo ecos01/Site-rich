@@ -3,7 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { Suspense, type ReactNode } from 'react';
+import { Await } from 'react-router';
 import { ShoppingBag } from 'lucide-react';
+import type {CartApiQueryFragment} from 'storefrontapi.generated';
+import nineteenLogo from '~/assets/nineteen-logo-transparent.png';
 import { buyNow } from '@/actions';
 import { useAside } from '@/components/Aside';
 import StaggeredMenu from '@/components/StaggeredMenu';
@@ -16,7 +20,13 @@ const MENU_ITEMS = [
   { label: 'Home', ariaLabel: 'Go to home page', link: '/' },
   { label: 'Abbigliamento', ariaLabel: 'Abbigliamento', link: '/collections/abbigliamento' },
   { label: 'Calzature', ariaLabel: 'Calzature', link: '/collections/calzature' },
-  { label: 'Campaign', ariaLabel: 'View the campaign', link: '/campaign' },
+  {
+    label: (
+      <img src={nineteenLogo} alt="" className="h-10 w-auto" />
+    ),
+    ariaLabel: 'Shop Nineteen',
+    link: '/nineteen',
+  },
   { label: 'About', ariaLabel: 'Learn about us', link: '/about' },
 ];
 
@@ -26,9 +36,20 @@ const SOCIAL_ITEMS = [
   { label: 'YouTube', link: 'https://youtube.com' },
 ];
 
-export function Nav() {
+export function Nav({
+  cart,
+}: {
+  cart?: Promise<CartApiQueryFragment | null>;
+}) {
   const pathname = usePathname();
   const {open} = useAside();
+  // Pages that render the black ShopBanner at the very top — controls must be
+  // white there so they read on the dark strip (see ShopPage).
+  const onShopBanner =
+    pathname === '/shop' ||
+    pathname.startsWith('/shop/') ||
+    pathname.startsWith('/collections/') ||
+    ['/essential', '/altro', '/supreme', '/nineteen'].includes(pathname);
   return (
     <StaggeredMenu
       isFixed
@@ -41,6 +62,7 @@ export function Nav() {
       menuButtonColor="#171717"
       openMenuButtonColor="#171717"
       changeMenuColorOnOpen={false}
+      whiteControlsAtTop={onShopBanner}
       logoUrl="/logo.png"
       colors={['#9BDCEC', '#008F95']}
       accentColor="#008F95"
@@ -50,9 +72,24 @@ export function Nav() {
           <button
             aria-label="Shopping bag"
             onClick={() => open('cart')}
-            className="cursor-pointer transition-opacity hover:opacity-60"
+            className="relative cursor-pointer transition-opacity hover:opacity-60"
           >
             <ShoppingBag className="size-5" />
+            {cart && (
+              <Suspense fallback={null}>
+                <Await resolve={cart}>
+                  {(resolved) => {
+                    const count = resolved?.totalQuantity ?? 0;
+                    if (!count) return null;
+                    return (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#008F95] px-1 text-[10px] font-bold leading-none text-white">
+                        {count}
+                      </span>
+                    );
+                  }}
+                </Await>
+              </Suspense>
+            )}
           </button>
           <UserMenu />
         </>
@@ -65,7 +102,7 @@ export function CategoryDivider({
   title,
   align,
 }: {
-  title: string;
+  title: ReactNode;
   align: 'left' | 'right';
 }) {
   return (
@@ -181,7 +218,7 @@ export function Footer() {
           <h4 className="mb-4 text-[14px] font-bold uppercase tracking-[0.15em]">House</h4>
           <ul className="space-y-2 text-[14px] text-[#FFFFFF]/70">
             <li><Link href="/about" className="transition-colors hover:text-[#FFE1BA]">About</Link></li>
-            <li><Link href="/campaign" className="transition-colors hover:text-[#FFE1BA]">Campaign</Link></li>
+            <li><Link href="/nineteen" className="transition-colors hover:text-[#FFE1BA]">Nineteen</Link></li>
             <li><Link href="/about" className="transition-colors hover:text-[#FFE1BA]">Stockists</Link></li>
             <li><Link href="/about" className="transition-colors hover:text-[#FFE1BA]">Contact</Link></li>
           </ul>

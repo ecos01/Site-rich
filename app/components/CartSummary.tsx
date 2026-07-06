@@ -3,6 +3,8 @@ import type {CartLayout} from '~/components/CartMain';
 import {CartForm, Money, type OptimisticCart} from '@shopify/hydrogen';
 import {useEffect, useId, useRef, useState} from 'react';
 import {useFetcher} from 'react-router';
+import {money} from './QuickShop';
+import {UNIT_PRICE_ATTR} from './ShippingModal';
 
 type CartSummaryProps = {
   cart: OptimisticCart<CartApiQueryFragment | null>;
@@ -18,18 +20,21 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
   const giftCardHeadingId = useId();
   const giftCardInputId = useId();
 
+  // Subtotal from the per-line chosen prices (size/shipping box), always EUR.
+  const subtotal = (cart?.lines?.nodes ?? []).reduce((sum, line) => {
+    const unitAttr = line.attributes?.find((a) => a.key === UNIT_PRICE_ATTR);
+    const lineTotal = unitAttr
+      ? Number(unitAttr.value) * (line.quantity ?? 1)
+      : Number(line.cost?.totalAmount?.amount ?? 0);
+    return sum + lineTotal;
+  }, 0);
+
   return (
     <div aria-labelledby={summaryId} className={className}>
       <h4 id={summaryId}>Totals</h4>
       <dl role="group" className="cart-subtotal">
         <dt>Subtotal</dt>
-        <dd>
-          {cart?.cost?.subtotalAmount?.amount ? (
-            <Money data={cart?.cost?.subtotalAmount} />
-          ) : (
-            '-'
-          )}
-        </dd>
+        <dd>{money({amount: String(subtotal), currencyCode: 'EUR'})}</dd>
       </dl>
       <CartDiscounts
         discountCodes={cart?.discountCodes}

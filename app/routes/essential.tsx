@@ -1,23 +1,17 @@
-import {CategoryDivider} from '@/components/site';
-import {ShopGrid} from '@/components/shop-grid';
-import {MegaNav} from '@/components/mega-nav';
-import {ShopBanner} from '@/components/shop-banner';
-import {PRODUCTS} from '@/lib/products';
+import {useLoaderData} from 'react-router';
+import type {Route} from './+types/essential';
+import {ShopPage} from '@/components/ShopPage';
+import {loadShopCollection} from '@/lib/shop';
 
-export const meta = () => [{title: 'Essentials — RICK'}];
+// Essentials = wardrobe basics — same product set as /collections/abbigliamento.
+export const meta = () => [{title: 'Essentials — LAB19'}];
 
-// Essentials = wardrobe basics (tops + bottoms).
-const ITEMS = PRODUCTS.filter(
-  (p) => p.category === 'Tops' || p.category === 'Bottoms',
-);
+export async function loader({context, request}: Route.LoaderArgs) {
+  const data = await loadShopCollection(context.storefront, request, 'abbigliamento');
+  return {...data, products: data.products.slice(0, 5)};
+}
 
 export default function EssentialPage() {
-  return (
-    <>
-      <ShopBanner />
-      <MegaNav />
-      <CategoryDivider title="Essentials" align="left" />
-      <ShopGrid products={ITEMS} />
-    </>
-  );
+  const {products, sizes} = useLoaderData<typeof loader>();
+  return <ShopPage title="Essentials" products={products} sizes={sizes} />;
 }

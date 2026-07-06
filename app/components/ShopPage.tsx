@@ -1,4 +1,5 @@
 import {useSearchParams} from 'react-router';
+import type {ReactNode} from 'react';
 import {CategoryDivider} from '@/components/site';
 import {MegaNav} from '@/components/mega-nav';
 import {ShopBanner} from '@/components/shop-banner';
@@ -15,7 +16,7 @@ export function ShopPage({
   products,
   sizes,
 }: {
-  title: string;
+  title: ReactNode;
   products: StoreProduct[];
   sizes: string[];
 }) {
@@ -35,9 +36,8 @@ export function ShopPage({
 
   return (
     <>
-      {/* Spacer so the fixed nav's dark controls sit over light bg, not the dark
-          LAB19 banner (dark-on-dark made them invisible on collection pages). */}
-      <div aria-hidden className="h-14 md:h-16" />
+      {/* Black banner sits at the very top; the fixed nav controls float over it
+          in white (Nav passes whiteControlsAtTop for these routes). */}
       <ShopBanner />
       <MegaNav />
       <CategoryDivider title={title} align="left" />

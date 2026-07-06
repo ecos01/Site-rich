@@ -11,9 +11,9 @@ export function StoreCard({product}: {product: StoreProduct}) {
     Number(product.priceRange.minVariantPrice.amount);
 
   return (
-    <div className="group flex flex-col">
-      <Link to={`/products/${product.handle}`} className="block">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#f5f4f1]">
+    <div className="group flex h-full flex-col">
+      <Link to={`/products/${product.handle}`} className="flex flex-1 flex-col">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-[#f5f4f1]">
           {product.featuredImage && (
             <Image
               data={product.featuredImage}
@@ -22,7 +22,7 @@ export function StoreCard({product}: {product: StoreProduct}) {
             />
           )}
         </div>
-        <div className="mt-4 text-center">
+        <div className="mt-4 flex-1 text-center">
           {product.vendor && (
             <p className="text-[13px] font-medium text-[#171717]">
               {product.vendor}

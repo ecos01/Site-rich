@@ -52,7 +52,10 @@ export async function createHydrogenRouterContext(
       cache,
       waitUntil,
       session,
-      // Or detect from URL path based on locale subpath, cookies, or any other strategy
+      // mock.shop's cart lookups (cart.get()) silently return empty under
+      // country: 'IT' — no error, just no cart, which broke the cart drawer.
+      // Keep the Storefront context on US/EN (mock.shop's only real market)
+      // and handle EUR display cosmetically in money() instead.
       i18n: {language: 'EN', country: 'US'},
       cart: {
         queryFragment: CART_QUERY_FRAGMENT,

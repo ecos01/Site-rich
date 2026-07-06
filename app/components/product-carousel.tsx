@@ -7,7 +7,7 @@ import type {StoreProduct} from '@/components/QuickShop';
 
 // Horizontal scroll strip of the same StoreCards used on the shop grid.
 export function ProductCarousel({products}: {products: StoreProduct[]}) {
-  const items = products.slice(0, 12);
+  const items = products.slice(0, 5);
   const track = useRef<HTMLDivElement>(null);
 
   const slide = (dir: 1 | -1) => {

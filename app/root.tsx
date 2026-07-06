@@ -14,6 +14,8 @@ import type {Route} from './+types/root';
 import favicon from '~/assets/favicon.svg';
 import tailwindCss from './styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
+import {JsonLd} from './components/JsonLd';
+import {organizationSchema, websiteSchema} from './lib/structured-data';
 
 export type RootLoader = typeof loader;
 
@@ -59,11 +61,6 @@ export function links() {
       rel: 'preconnect',
       href: 'https://shop.app',
     },
-    {rel: 'preconnect', href: 'https://api.fontshare.com'},
-    {
-      rel: 'stylesheet',
-      href: 'https://api.fontshare.com/v2/css?f[]=clash-display@700&f[]=satoshi@400,500,700&display=swap',
-    },
     {rel: 'icon', type: 'image/svg+xml', href: favicon},
   ];
 }
@@ -80,6 +77,7 @@ export async function loader(args: Route.LoaderArgs) {
   return {
     ...deferredData,
     ...criticalData,
+    origin: new URL(args.request.url).origin,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     shop: getShopAnalytics({
       storefront,
@@ -153,6 +151,7 @@ export default function App() {
       shop={data.shop}
       consent={data.consent}
     >
+      <JsonLd data={[organizationSchema(data.origin), websiteSchema(data.origin)]} />
       <PageLayout {...data}>
         <Outlet />
       </PageLayout>

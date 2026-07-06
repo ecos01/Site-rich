@@ -1,47 +1,27 @@
 import {useLoaderData} from 'react-router';
-import {CategoryDivider} from '@/components/site';
-import {ShopGrid} from '@/components/shop-grid';
-import {MegaNav} from '@/components/mega-nav';
-import {ShopBanner} from '@/components/shop-banner';
-import {PRODUCTS, type Product} from '@/lib/products';
-import {BRANDS, brandSlug} from '@/lib/brands';
+import type {Route} from './+types/shop.$slug';
+import {ShopPage} from '@/components/ShopPage';
+import {loadShopCollection} from '@/lib/shop';
 
-// Mega-nav + /brands landing pages: product types + every brand.
-// ponytail: fallback catalog has no real brand/type data — every slug filters to
-// shoes (or a name match) until the Storefront sync lands.
-const shoes = (p: Product) => p.category === 'Shoes';
-
-const SLUGS: Record<string, {title: string; filter: (p: Product) => boolean}> = {
-  sneakers: {title: 'Sneakers', filter: shoes},
-  'comfort-shoes': {title: 'Comfort Shoes', filter: shoes},
-  'scarpe-classiche': {title: 'Scarpe Classiche', filter: shoes},
+// Mega-nav + /brands landing pages — same grid/filter/quick-shop as
+// /collections/:handle (loadShopCollection already resolves brand slugs).
+const TITLE_OVERRIDES: Record<string, string> = {
+  sneakers: 'Sneakers',
+  'comfort-shoes': 'Comfort Shoes',
+  'scarpe-classiche': 'Scarpe Classiche',
 };
-for (const name of BRANDS) {
-  const re = new RegExp(name.replace(/[^a-z0-9]+/gi, '.?'), 'i');
-  SLUGS[brandSlug(name)] = {
-    title: name,
-    filter: (p) => re.test(p.name) || shoes(p),
-  };
-}
 
 export const meta = ({data}: {data?: {title: string}}) => [
-  {title: data ? `${data.title} — RICK` : 'Shop — RICK'},
+  {title: data ? `${data.title} — LAB19` : 'Shop — LAB19'},
 ];
 
-export async function loader({params}: {params: {slug: string}}) {
-  const entry = SLUGS[params.slug];
-  if (!entry) throw new Response('Not Found', {status: 404});
-  return {title: entry.title, products: PRODUCTS.filter(entry.filter)};
+export async function loader({context, request, params}: Route.LoaderArgs) {
+  const data = await loadShopCollection(context.storefront, request, params.slug);
+  const title = TITLE_OVERRIDES[params.slug!] ?? data.title;
+  return {...data, title};
 }
 
 export default function ShopCategoryPage() {
-  const {title, products} = useLoaderData<typeof loader>();
-  return (
-    <>
-      <ShopBanner />
-      <MegaNav />
-      <CategoryDivider title={title} align="left" />
-      <ShopGrid products={products} />
-    </>
-  );
+  const {title, products, sizes} = useLoaderData<typeof loader>();
+  return <ShopPage title={title} products={products} sizes={sizes} />;
 }

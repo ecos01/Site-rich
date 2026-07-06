@@ -821,7 +821,13 @@ export type PdpProductQuery = {
   product?: StorefrontAPI.Maybe<
     Pick<
       StorefrontAPI.Product,
-      'id' | 'handle' | 'title' | 'vendor' | 'descriptionHtml' | 'tags'
+      | 'id'
+      | 'handle'
+      | 'productType'
+      | 'title'
+      | 'vendor'
+      | 'descriptionHtml'
+      | 'tags'
     > & {
       featuredImage?: StorefrontAPI.Maybe<
         Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
@@ -1118,7 +1124,7 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query PdpProduct($handle: String!, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      handle\n      title\n      vendor\n      descriptionHtml\n      tags\n      featuredImage { id url altText width height }\n      priceRange { minVariantPrice { amount currencyCode } }\n      options { name optionValues { name } }\n      variants(first: 100) {\n        nodes {\n          id\n          sku\n          availableForSale\n          selectedOptions { name value }\n          price { amount currencyCode }\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  query PdpProduct($handle: String!, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      handle\n      productType\n      title\n      vendor\n      descriptionHtml\n      tags\n      featuredImage { id url altText width height }\n      priceRange { minVariantPrice { amount currencyCode } }\n      options { name optionValues { name } }\n      variants(first: 100) {\n        nodes {\n          id\n          sku\n          availableForSale\n          selectedOptions { name value }\n          price { amount currencyCode }\n        }\n      }\n    }\n  }\n': {
     return: PdpProductQuery;
     variables: PdpProductQueryVariables;
   };

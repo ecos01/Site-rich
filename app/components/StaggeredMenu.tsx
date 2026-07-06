@@ -10,7 +10,7 @@ const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export interface StaggeredMenuItem {
-  label: string;
+  label: React.ReactNode;
   ariaLabel?: string;
   link: string;
 }
@@ -37,6 +37,9 @@ export interface StaggeredMenuProps {
   isFixed?: boolean;
   closeOnClickAway?: boolean;
   headerExtras?: React.ReactNode;
+  /** When true, header controls render white while near the top of the page
+   *  (so they read on a dark banner) and switch to menuButtonColor once scrolled. */
+  whiteControlsAtTop?: boolean;
   onMenuOpen?: () => void;
   onMenuClose?: () => void;
 }
@@ -58,12 +61,16 @@ export const StaggeredMenu = ({
   isFixed = false,
   closeOnClickAway = true,
   headerExtras,
+  whiteControlsAtTop = false,
   onMenuOpen,
   onMenuClose
 }: StaggeredMenuProps) => {
   const [open, setOpen] = useState(false);
   const [logoHidden, setLogoHidden] = useState(false);
   const [controlsHidden, setControlsHidden] = useState(false);
+  const [atTop, setAtTop] = useState(true);
+  // White controls only while over the dark banner (near top).
+  const restColor = whiteControlsAtTop && atTop ? '#ffffff' : menuButtonColor;
   const openRef = useRef(false);
   const panelRef = useRef<HTMLElement | null>(null);
   const preLayersRef = useRef<HTMLDivElement | null>(null);
@@ -91,6 +98,7 @@ export const StaggeredMenu = ({
       const y = window.scrollY;
       setLogoHidden(y > 40);
       setControlsHidden(y > lastY && y > 80);
+      setAtTop(y < 60);
       lastY = y;
     };
     onScroll();
@@ -123,10 +131,10 @@ export const StaggeredMenu = ({
       gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 90 });
       gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
       gsap.set(textInner, { yPercent: 0 });
-      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: menuButtonColor });
+      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: restColor });
     });
     return () => ctx.revert();
-  }, [menuButtonColor, position]);
+  }, [menuButtonColor, position, restColor]);
 
   const buildOpenTimeline = useCallback(() => {
     const panel = panelRef.current;
@@ -306,7 +314,7 @@ export const StaggeredMenu = ({
       if (!btn) return;
       colorTweenRef.current?.kill();
       if (changeMenuColorOnOpen) {
-        const targetColor = opening ? openMenuButtonColor : menuButtonColor;
+        const targetColor = opening ? openMenuButtonColor : restColor;
         colorTweenRef.current = gsap.to(btn, {
           color: targetColor,
           delay: 0.18,
@@ -314,22 +322,22 @@ export const StaggeredMenu = ({
           ease: 'power2.out'
         });
       } else {
-        gsap.set(btn, { color: menuButtonColor });
+        gsap.set(btn, { color: restColor });
       }
     },
-    [openMenuButtonColor, menuButtonColor, changeMenuColorOnOpen]
+    [openMenuButtonColor, restColor, changeMenuColorOnOpen]
   );
 
   React.useEffect(() => {
     if (toggleBtnRef.current) {
       if (changeMenuColorOnOpen) {
-        const targetColor = openRef.current ? openMenuButtonColor : menuButtonColor;
+        const targetColor = openRef.current ? openMenuButtonColor : restColor;
         gsap.set(toggleBtnRef.current, { color: targetColor });
       } else {
-        gsap.set(toggleBtnRef.current, { color: menuButtonColor });
+        gsap.set(toggleBtnRef.current, { color: restColor });
       }
     }
-  }, [changeMenuColorOnOpen, menuButtonColor, openMenuButtonColor]);
+  }, [changeMenuColorOnOpen, restColor, openMenuButtonColor]);
 
   const animateText = useCallback((opening: boolean) => {
     const inner = textInnerRef.current;
@@ -436,7 +444,10 @@ export const StaggeredMenu = ({
           // pinned right on pages without a logo (identical position everywhere).
           <span aria-hidden="true" />
         )}
-        <div className={`sm-header-right${controlsHidden && !open ? ' sm-controls-hidden' : ''}`}>
+        <div
+          className={`sm-header-right${controlsHidden && !open ? ' sm-controls-hidden' : ''}`}
+          style={{color: open ? undefined : restColor}}
+        >
         {headerExtras}
         <button
           ref={toggleBtnRef}
@@ -469,7 +480,7 @@ export const StaggeredMenu = ({
           <ul className="sm-panel-list" role="list" data-numbering={displayItemNumbering || undefined}>
             {items && items.length ? (
               items.map((it, idx) => (
-                <li className="sm-panel-itemWrap" key={it.label + idx}>
+                <li className="sm-panel-itemWrap" key={idx}>
                   <a className="sm-panel-item" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1}>
                     <span className="sm-panel-itemLabel">{it.label}</span>
                   </a>
