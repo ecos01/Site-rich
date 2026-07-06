@@ -12,6 +12,7 @@ export function SizeOptionGrid({
   priceFor,
   euConvert,
   isAvailable,
+  showPrice = true,
 }: {
   values: string[];
   selected?: string;
@@ -19,6 +20,7 @@ export function SizeOptionGrid({
   priceFor: (value: string) => PriceMoney | undefined;
   euConvert?: boolean;
   isAvailable?: (value: string) => boolean;
+  showPrice?: boolean;
 }) {
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -39,7 +41,9 @@ export function SizeOptionGrid({
             <span className="text-[14px] font-bold">
               {euConvert ? toEuSize(value) : value}
             </span>
-            {price && <span className="text-[12px] text-[#171717]/60">{money(price)}</span>}
+            {showPrice && price && (
+              <span className="text-[12px] text-[#171717]/60">{money(price)}</span>
+            )}
           </button>
         );
       })}

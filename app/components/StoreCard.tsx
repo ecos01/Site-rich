@@ -42,7 +42,7 @@ export function StoreCard({product}: {product: StoreProduct}) {
       <button
         type="button"
         onClick={() => openQuickShop(product)}
-        className="mt-3 border border-[#171717] py-2.5 text-[12px] font-medium uppercase tracking-[0.15em] transition-colors hover:bg-[#171717] hover:text-white"
+        className="mt-3 rounded-full border border-[#171717] py-2.5 text-[12px] font-medium uppercase tracking-[0.15em] transition-colors hover:bg-[#171717] hover:text-white"
       >
         Scegli la taglia
       </button>

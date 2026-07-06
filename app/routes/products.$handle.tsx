@@ -15,35 +15,71 @@ import {
   shippingAttributes,
   type ShippingSpeed,
 } from '@/components/ShippingModal';
-import {isShoe} from '@/lib/shop';
+import {
+  isShoe,
+  baseTitle,
+  colorLabel,
+  NINETEEN_HANDLES,
+  getShopProducts,
+} from '@/lib/shop';
 import {isAvailable, USE_LOCAL_CATALOG} from '@/lib/testing';
 import {LAB19_CATALOG} from '@/lib/fixtures/catalog';
 import paypalLogo from '@/assets/paypal-logo.png';
 import {MegaNav} from '@/components/mega-nav';
+import {GlareHover} from '@/components/GlareHover';
+import {StarBorder} from '@/components/StarBorder';
 
 export const meta = ({data}: {data?: {product?: {title: string}}}) => [
   {title: `${data?.product?.title ?? 'Prodotto'} — LAB19`},
 ];
 
 export async function loader({context, params, request}: Route.LoaderArgs) {
+  const handle = params.handle!;
+  const isNineteen = NINETEEN_HANDLES.has(handle);
+
   if (USE_LOCAL_CATALOG) {
-    const product = LAB19_CATALOG.find((p) => p.handle === params.handle);
+    const product = LAB19_CATALOG.find((p) => p.handle === handle);
     if (!product) throw new Response('Not found', {status: 404});
-    return {product, url: request.url};
+    const colorSiblings = siblingsOf(LAB19_CATALOG, product.title, handle);
+    return {product, url: request.url, isNineteen, colorSiblings};
   }
 
   const {product} = await context.storefront.query(PRODUCT_QUERY, {
-    variables: {handle: params.handle},
+    variables: {handle},
   });
   if (!product) throw new Response('Not found', {status: 404});
-  return {product, url: request.url};
+
+  // Sibling colorways = other products sharing the same base name.
+  const catalog = await getShopProducts(context.storefront, {first: 100});
+  const colorSiblings = siblingsOf(catalog, product.title, handle);
+
+  return {product, url: request.url, isNineteen, colorSiblings};
+}
+
+// Products sharing this product's base name (its colorways), self included.
+function siblingsOf(
+  catalog: Array<{handle: string; title: string; featuredImage?: {url: string} | null}>,
+  title: string,
+  handle: string,
+) {
+  const base = baseTitle(title);
+  const group = catalog
+    .filter((p) => baseTitle(p.title) === base)
+    .map((p) => ({
+      handle: p.handle,
+      color: colorLabel(p.title),
+      image: p.featuredImage?.url ?? null,
+      current: p.handle === handle,
+    }));
+  // Only meaningful if there's more than one colorway.
+  return group.length > 1 ? group : [];
 }
 
 const isColor = (n: string) => /color|colore/i.test(n);
 const isSize = (n: string) => /size|taglia/i.test(n);
 
 export default function Product() {
-  const {product, url} = useLoaderData<typeof loader>();
+  const {product, url, isNineteen, colorSiblings} = useLoaderData<typeof loader>();
   const {open} = useAside();
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [qty, setQty] = useState(1);
@@ -144,12 +180,48 @@ export default function Product() {
           <p className="mt-4 text-[20px]">{money(price)}</p>
           <p className="mt-1 text-[13px] text-[#171717]/60">
             Tasse incluse.{' '}
-            {selected[pendingSizeOption?.name ?? '']
+            {!isNineteen && selected[pendingSizeOption?.name ?? '']
               ? shippingSpeed === 'express'
                 ? 'Spedizione in 1-2 giorni lavorativi.'
                 : 'Spedizione in 5-10 giorni lavorativi.'
               : 'Spedizione calcolata al momento del pagamento.'}
           </p>
+
+          {/* Colorways: sibling products sharing this product's base name. */}
+          {colorSiblings.length > 1 && (
+            <div className="mt-8">
+              <p className="mb-2 text-[14px]">
+                Colore:{' '}
+                <span className="font-bold">
+                  {colorSiblings.find((c) => c.current)?.color}
+                </span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {colorSiblings.map((c) => (
+                  <Link
+                    key={c.handle}
+                    to={`/products/${c.handle}`}
+                    title={c.color}
+                    aria-label={c.color}
+                    prefetch="intent"
+                    className={`size-[68px] overflow-hidden rounded-xl border bg-[#f5f4f1] ${
+                      c.current
+                        ? 'border-2 border-[#171717]'
+                        : 'border-[#171717]/15 hover:border-[#171717]/50'
+                    }`}
+                  >
+                    {c.image && (
+                      <img
+                        src={c.image}
+                        alt={c.color}
+                        className="h-full w-full object-contain p-1.5"
+                      />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 space-y-6">
             {product.options.map((option: any) => {
@@ -165,10 +237,14 @@ export default function Product() {
                     <SizeOptionGrid
                       values={option.optionValues.map((v: any) => v.name)}
                       selected={selected[option.name]}
+                      showPrice={!isNineteen}
                       onSelect={(value) => {
                         setSelected((s) => ({...s, [option.name]: value}));
-                        setPendingSizeOption({name: option.name, value});
-                        setShippingModalOpen(true);
+                        // Nineteen = normal checkout: no shipping-speed modal.
+                        if (!isNineteen) {
+                          setPendingSizeOption({name: option.name, value});
+                          setShippingModalOpen(true);
+                        }
                       }}
                       priceFor={(value) => priceForValue(option.name, value)}
                       euConvert={shoe}
@@ -236,15 +312,30 @@ export default function Product() {
               </button>
             )}
 
-            <div className="[&_button]:w-full [&_button]:rounded-full [&_button]:bg-[#171717] [&_button]:py-4 [&_button]:text-[13px] [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-[0.2em] [&_button]:text-white [&_button:disabled]:opacity-40">
-              <AddToCartButton
-                disabled={!canAdd}
-                onClick={() => open('cart')}
-                lines={variant ? [{merchandiseId: variant.id, quantity: qty}] : []}
+            <StarBorder as="div" color="#008f95" speed="5s" thickness={4} className="sb-addcart">
+              <GlareHover
+                width="100%"
+                height="auto"
+                background="transparent"
+                borderColor="transparent"
+                borderRadius="9999px"
+                glareColor="#ffffff"
+                glareOpacity={0.35}
+                glareAngle={-30}
+                glareSize={300}
+                transitionDuration={2000}
+                style={{placeItems: 'stretch'}}
+                className="[&_button]:w-full [&_button]:rounded-full [&_button]:bg-[#171717] [&_button]:py-4 [&_button]:text-[13px] [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-[0.2em] [&_button]:text-white [&_button:disabled]:opacity-40 [&_form]:w-full"
               >
-                {!allChosen ? 'Seleziona' : canAdd ? 'Aggiungi al carrello' : 'Esaurito'}
-              </AddToCartButton>
-            </div>
+                <AddToCartButton
+                  disabled={!canAdd}
+                  onClick={() => open('cart')}
+                  lines={variant ? [{merchandiseId: variant.id, quantity: qty}] : []}
+                >
+                  {!allChosen ? 'Seleziona' : canAdd ? 'Aggiungi al carrello' : 'Esaurito'}
+                </AddToCartButton>
+              </GlareHover>
+            </StarBorder>
 
             {/* Express checkout — skips the cart, creates a fresh cart with just this
                 line and redirects straight to Shopify checkout (real PayPal option
@@ -255,12 +346,12 @@ export default function Product() {
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-[#ffc439] py-4 text-[15px] font-bold text-[#171717] transition-opacity hover:opacity-90"
               >
                 Paga con
-                <img src={paypalLogo} alt="PayPal" className="h-5 w-auto" />
+                <img src={paypalLogo} alt="PayPal" className="h-7 w-auto" />
               </a>
             ) : (
               <span className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-[#ffc439]/40 py-4 text-[15px] font-bold text-[#171717]/40">
                 Paga con
-                <img src={paypalLogo} alt="" className="h-5 w-auto opacity-40" />
+                <img src={paypalLogo} alt="" className="h-7 w-auto opacity-40" />
               </span>
             )}
             {checkoutHref && canAdd ? (

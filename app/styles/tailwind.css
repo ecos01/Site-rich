@@ -5,6 +5,8 @@
    navigation never drops it (side-effect imports can be code-split away). */
 @import "../components/StaggeredMenu.css";
 @import "../components/ElectricBorder.css";
+@import "../components/GlareHover.css";
+@import "../components/StarBorder.css";
 
 @custom-variant dark (&:is(.dark *));
 

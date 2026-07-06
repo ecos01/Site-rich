@@ -161,6 +161,7 @@ const SPECIAL: Record<string, {title: string; sort?: SortValue}> = {
   abbigliamento: {title: 'Abbigliamento'},
   calzature: {title: 'Calzature'},
   all: {title: 'Shop'},
+  nineteen: {title: 'Nineteen'},
 };
 const VENDOR_BY_SLUG: Record<string, string> = Object.fromEntries(
   BRANDS.map((b) => [brandSlug(b), b]),
@@ -190,6 +191,36 @@ export const SHOE_RE = /shoe|sneaker|calzatur|footwear|boot|stivali|sandal|ciaba
 export const isShoe = (p: {productType?: string | null; tags?: string[] | null}) =>
   SHOE_RE.test(p.productType ?? '') || (p.tags ?? []).some((t) => SHOE_RE.test(t));
 
+// Products that make up the brand's own line (/nineteen). Exclusive to that page:
+// excluded everywhere else. (Reusing real mock.shop handles so the cart works;
+// swap for real Nineteen products once the store is connected.)
+export const NINETEEN_HANDLES = new Set([
+  'men-t-shirt',
+  'women-t-shirt',
+  'men-crewneck',
+  'women-crewneck',
+  'half-zip',
+]);
+
+// Base name for color grouping: "Soft Cotton Hoodie in Green" -> "Soft Cotton
+// Hoodie", "Nike Presto Black" -> "Nike Presto". Products sharing a base name
+// are treated as colorways of one another.
+const TRAILING_COLOR =
+  /\s+(black|white|grey|gray|green|blue|red|brown|beige|navy|pink|purple|yellow|orange|silver|cream|tan|olive|khaki|obsidian|phantom|jam|ocean|violet|clay|sea\s?salt|oatmeal|bone)$/i;
+export function baseTitle(title: string): string {
+  return title
+    .replace(/\s+in\s+.+$/i, '')
+    .replace(TRAILING_COLOR, '')
+    .trim();
+}
+
+// The color descriptor that distinguishes this product from its siblings.
+export function colorLabel(title: string): string {
+  const base = baseTitle(title);
+  const rest = title.slice(base.length).replace(/^\s*(in\s+)?/i, '').trim();
+  return rest || title;
+}
+
 export async function loadShopCollection(
   storefront: Storefront,
   request: Request,
@@ -218,6 +249,10 @@ export async function loadShopCollection(
   const sizeSel = sp.get('size');
   const genreSel = sp.get('genre');
   let products = raw;
+  // /nineteen shows ONLY the brand line; every other page excludes it.
+  if (handle === 'nineteen')
+    products = products.filter((p) => NINETEEN_HANDLES.has(p.handle));
+  else products = products.filter((p) => !NINETEEN_HANDLES.has(p.handle));
   if (handle === 'calzature') products = products.filter(isShoe);
   else if (handle === 'abbigliamento') products = products.filter((p) => !isShoe(p));
   if (sizeSel) products = products.filter((p) => hasSize(p, sizeSel));
